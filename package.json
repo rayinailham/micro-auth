@@ -1,0 +1,25 @@
+{
+  "name": "auth-service",
+  "version": "1.0.0",
+  "description": "TryFitOut Auth Service using Hono and Firebase Auth",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir=dist --target=bun",
+    "start": "bun run dist/index.js",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "hono": "^4.5.8",
+    "firebase-admin": "^12.4.0",
+    "zod": "^3.23.8",
+    "@hono/zod-validator": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "bun-types": "latest"
+  },
+  "keywords": ["auth", "firebase", "hono", "typescript"],
+  "author": "TryFitOut Team",
+  "license": "MIT"
+}
