@@ -1,0 +1,266 @@
+{
+  "summary": {
+    "total": 26,
+    "passed": 25,
+    "failed": 1,
+    "skipped": 0,
+    "passRate": "96.15%",
+    "duration": "35.57s",
+    "startTime": "2025-10-03T18:30:33.023Z",
+    "endTime": "2025-10-03T18:31:08.595Z"
+  },
+  "tests": [
+    {
+      "name": "GET /health",
+      "passed": true,
+      "message": "Health check endpoint working correctly",
+      "details": {
+        "status": "healthy",
+        "timestamp": "2025-10-03T18:30:35.035Z",
+        "service": "auth-service",
+        "version": "1.0.0"
+      },
+      "timestamp": "2025-10-03T18:30:35.041Z"
+    },
+    {
+      "name": "GET /",
+      "passed": true,
+      "message": "Root endpoint returning service information",
+      "details": {
+        "service": "Microservice Auth Boilerplate",
+        "version": "1.0.0",
+        "endpoints": {
+          "health": "/health",
+          "auth": "/v1/auth"
+        }
+      },
+      "timestamp": "2025-10-03T18:30:35.545Z"
+    },
+    {
+      "name": "POST /v1/auth/register",
+      "passed": true,
+      "message": "User registered successfully",
+      "details": {
+        "uid": "Yawk7hfmR4bu7CfI1khkLdoeg7s1",
+        "email": "test-1759516233023@example.com",
+        "displayName": "Test User"
+      },
+      "timestamp": "2025-10-03T18:30:47.531Z"
+    },
+    {
+      "name": "POST /v1/auth/register (duplicate)",
+      "passed": false,
+      "message": "Expected duplicate error, got 400",
+      "details": {
+        "success": false,
+        "error": {
+          "code": "UNKNOWN_ERROR",
+          "message": "EMAIL_EXISTS"
+        },
+        "message": "Operation failed",
+        "timestamp": "2025-10-03T18:30:48.440Z"
+      },
+      "timestamp": "2025-10-03T18:30:48.443Z"
+    },
+    {
+      "name": "POST /v1/auth/register (invalid email)",
+      "passed": true,
+      "message": "Invalid email format properly rejected",
+      "details": {
+        "statusCode": 400
+      },
+      "timestamp": "2025-10-03T18:30:48.456Z"
+    },
+    {
+      "name": "POST /v1/auth/login",
+      "passed": true,
+      "message": "User logged in successfully",
+      "details": {
+        "uid": "Yawk7hfmR4bu7CfI1khkLdoeg7s1",
+        "email": "test-1759516233023@example.com"
+      },
+      "timestamp": "2025-10-03T18:30:49.678Z"
+    },
+    {
+      "name": "POST /v1/auth/login (wrong password)",
+      "passed": true,
+      "message": "Wrong password properly rejected",
+      "details": {
+        "statusCode": 400
+      },
+      "timestamp": "2025-10-03T18:30:50.487Z"
+    },
+    {
+      "name": "POST /v1/auth/login (non-existent user)",
+      "passed": true,
+      "message": "Non-existent user login properly rejected",
+      "details": {
+        "statusCode": 400
+      },
+      "timestamp": "2025-10-03T18:30:50.798Z"
+    },
+    {
+      "name": "POST /v1/auth/refresh",
+      "passed": true,
+      "message": "Token refreshed successfully",
+      "details": {
+        "hasNewToken": true
+      },
+      "timestamp": "2025-10-03T18:30:51.716Z"
+    },
+    {
+      "name": "POST /v1/auth/refresh (invalid token)",
+      "passed": true,
+      "message": "Invalid refresh token properly rejected",
+      "details": {
+        "statusCode": 400
+      },
+      "timestamp": "2025-10-03T18:30:52.536Z"
+    },
+    {
+      "name": "PATCH /v1/auth/profile",
+      "passed": true,
+      "message": "Profile updated successfully",
+      "details": {
+        "displayName": "Updated Test User"
+      },
+      "timestamp": "2025-10-03T18:30:55.743Z"
+    },
+    {
+      "name": "PATCH /v1/auth/profile (no auth)",
+      "passed": true,
+      "message": "Unauthorized request properly rejected",
+      "details": {
+        "statusCode": 401
+      },
+      "timestamp": "2025-10-03T18:30:56.246Z"
+    },
+    {
+      "name": "POST /v1/auth/forgot-password",
+      "passed": true,
+      "message": "Password reset email sent successfully (Note: Check Firebase console for actual email)",
+      "details": {
+        "email": "test-1759516233023@example.com"
+      },
+      "timestamp": "2025-10-03T18:30:57.565Z"
+    },
+    {
+      "name": "POST /v1/auth/forgot-password (non-existent email)",
+      "passed": true,
+      "message": "Forgot password handled for non-existent email (Firebase security feature)",
+      "details": {
+        "statusCode": 200
+      },
+      "timestamp": "2025-10-03T18:30:58.372Z"
+    },
+    {
+      "name": "POST /v1/auth/forgot-password (invalid email)",
+      "passed": true,
+      "message": "Invalid email format properly rejected",
+      "details": {
+        "statusCode": 400
+      },
+      "timestamp": "2025-10-03T18:30:58.376Z"
+    },
+    {
+      "name": "POST /v1/auth/reset-password (endpoint validation)",
+      "passed": true,
+      "message": "Reset password endpoint properly validates oobCode",
+      "details": {
+        "statusCode": 400,
+        "note": "Endpoint is working, invalid code as expected"
+      },
+      "timestamp": "2025-10-03T18:30:59.294Z"
+    },
+    {
+      "name": "POST /v1/auth/reset-password (missing oobCode)",
+      "passed": true,
+      "message": "Missing oobCode properly rejected",
+      "details": {
+        "statusCode": 400
+      },
+      "timestamp": "2025-10-03T18:30:59.796Z"
+    },
+    {
+      "name": "POST /v1/auth/logout",
+      "passed": true,
+      "message": "User logged out successfully",
+      "details": {
+        "message": "Logout successful"
+      },
+      "timestamp": "2025-10-03T18:31:00.729Z"
+    },
+    {
+      "name": "POST /v1/auth/refresh (after logout)",
+      "passed": true,
+      "message": "Old refresh token properly invalidated after logout",
+      "details": {
+        "statusCode": 400
+      },
+      "timestamp": "2025-10-03T18:31:01.495Z"
+    },
+    {
+      "name": "POST /v1/auth/logout (no auth)",
+      "passed": true,
+      "message": "Unauthorized logout properly rejected",
+      "details": {
+        "statusCode": 401
+      },
+      "timestamp": "2025-10-03T18:31:01.997Z"
+    },
+    {
+      "name": "DELETE /v1/auth/user (missing password)",
+      "passed": true,
+      "message": "Delete without password properly rejected",
+      "details": {
+        "statusCode": 400
+      },
+      "timestamp": "2025-10-03T18:31:03.204Z"
+    },
+    {
+      "name": "DELETE /v1/auth/user (wrong password)",
+      "passed": true,
+      "message": "Delete with wrong password properly rejected",
+      "details": {
+        "statusCode": 401
+      },
+      "timestamp": "2025-10-03T18:31:04.719Z"
+    },
+    {
+      "name": "DELETE /v1/auth/user",
+      "passed": true,
+      "message": "User account deleted successfully",
+      "details": {
+        "message": "User deleted successfully"
+      },
+      "timestamp": "2025-10-03T18:31:06.568Z"
+    },
+    {
+      "name": "POST /v1/auth/login (deleted user)",
+      "passed": true,
+      "message": "Deleted user cannot log in",
+      "details": {
+        "statusCode": 400
+      },
+      "timestamp": "2025-10-03T18:31:07.585Z"
+    },
+    {
+      "name": "DELETE /v1/auth/user (no auth)",
+      "passed": true,
+      "message": "Unauthorized delete properly rejected",
+      "details": {
+        "statusCode": 401
+      },
+      "timestamp": "2025-10-03T18:31:08.088Z"
+    },
+    {
+      "name": "GET /v1/auth/nonexistent",
+      "passed": true,
+      "message": "404 handler working correctly",
+      "details": {
+        "statusCode": 404
+      },
+      "timestamp": "2025-10-03T18:31:08.593Z"
+    }
+  ]
+}
