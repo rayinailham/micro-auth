@@ -1,205 +1,230 @@
-# TryFitOut Auth Service
+# Microservice Auth Boilerplate
 
-A Hono-based authentication service integrated with Firebase Auth for the TryFitOut application.
+🚀 **Microservice Authentication Boilerplate** yang siap pakai untuk berbagai kebutuhan microservice! Dibangun dengan teknologi modern seperti **Hono**, **Firebase Authentication**, **TypeScript**, dan **Bun**.
 
-## Features
+## ✨ Fitur Utama
 
-- ✅ User registration with email/password
-- ✅ User login and token generation
-- ✅ Token refresh functionality
-- ✅ Protected profile updates
-- ✅ Account deletion with password confirmation
-- ✅ Firebase Authentication integration
-- ✅ Comprehensive input validation with Zod
-- ✅ Standardized API responses
-- ✅ CORS support
-- ✅ Error handling and logging
+### 🔐 Authentication Features
+- ✅ **User Registration** - Email/password dengan validasi
+- ✅ **User Login** - Secure authentication dengan JWT tokens  
+- ✅ **Token Refresh** - Automatic token renewal
+- ✅ **Password Reset** - Email-based password reset flow
+- ✅ **Profile Management** - Update display name dan photo
+- ✅ **Account Deletion** - Secure account removal
 
-## Tech Stack
+### 🛡️ Security Features
+- 🔒 **Firebase Auth Integration** - Enterprise-grade authentication
+- 🔒 **JWT Token Validation** - Secure API access
+- 🔒 **Input Validation** - Comprehensive request validation dengan Zod
+- 🔒 **CORS Protection** - Cross-origin request security
+- 🔒 **Error Sanitization** - Safe error messages
 
-- **Runtime**: Bun
-- **Framework**: Hono
-- **Authentication**: Firebase Auth
-- **Validation**: Zod
-- **Language**: TypeScript
+### 👨‍💻 Developer Experience
+- 📝 **Standardized API** - Consistent request/response format
+- 📚 **Comprehensive Documentation** - Detailed API docs dan setup guides
+- 🔧 **TypeScript** - Full type safety
+- ⚡ **Fast Runtime** - Powered by Bun
+- 🧪 **Testing Ready** - Test structure included
 
-## Setup
+## 🚀 Quick Start
 
-### 1. Install Dependencies
+### 1. Clone Repository
+```bash
+git clone https://github.com/rayinailham/micro-auth.git
+cd micro-auth
+```
 
+### 2. Install Dependencies
 ```bash
 bun install
 ```
 
-### 2. Environment Configuration
-
-Copy the example environment file:
-
+### 3. Environment Setup
 ```bash
 cp .env.example .env
+# Edit .env dengan Firebase credentials Anda
 ```
 
-Fill in your Firebase configuration:
+### 4. Firebase Setup
+Ikuti panduan lengkap di [Firebase Setup Guide](docs/firebase-setup.md)
 
-```env
-PORT=3001
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
-FIREBASE_API_KEY=your-web-api-key
-NODE_ENV=development
-```
-
-### 3. Firebase Setup
-
-1. Create a Firebase project at https://console.firebase.google.com
-2. Enable Authentication with Email/Password provider
-3. Generate a service account key:
-   - Go to Project Settings > Service Accounts
-   - Click "Generate new private key"
-   - Use the downloaded JSON for environment variables
-4. Get your Web API Key from Project Settings > General
-
-### 4. Run the Service
-
-Development mode with hot reload:
+### 5. Run Development Server
 ```bash
 bun run dev
 ```
 
-Production build and run:
+Server akan berjalan di `http://localhost:8001`
+
+### 6. Test API
+```bash
+# Health check
+curl http://localhost:8001/health
+
+# Register user
+curl -X POST http://localhost:8001/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}'
+```
+
+## 📚 Dokumentasi
+
+### 🚀 Getting Started
+- **[API Endpoints](docs/api-endpoints.md)** - Daftar lengkap endpoint dengan request/response examples
+- **[Error Handling](docs/error-handling.md)** - Panduan menangani berbagai jenis error
+- **[Firebase Setup](docs/firebase-setup.md)** - Konfigurasi Firebase Authentication step-by-step
+
+### 🎯 Quick Navigation
+
+#### Untuk Developer Frontend/Mobile
+1. Mulai dengan [API Endpoints](docs/api-endpoints.md) untuk memahami cara menggunakan API
+2. Pelajari [Error Handling](docs/error-handling.md) untuk implementasi error handling yang proper
+3. Lihat contoh request/response untuk setiap endpoint
+
+#### Untuk DevOps/Backend Developer
+1. Ikuti [Firebase Setup](docs/firebase-setup.md) untuk konfigurasi Firebase
+2. Review security best practices di setiap dokumentasi
+3. Customize CORS settings sesuai kebutuhan
+
+#### Untuk Product Manager/QA
+1. Baca [API Endpoints](docs/api-endpoints.md) untuk memahami fitur yang tersedia
+2. Review [Error Handling](docs/error-handling.md) untuk memahami skenario error
+3. Gunakan informasi ini untuk test case dan user story
+
+## 🛠️ Tech Stack
+
+- **Runtime**: [Bun](https://bun.sh/) - Fast JavaScript runtime
+- **Framework**: [Hono](https://hono.dev/) - Lightweight web framework
+- **Authentication**: [Firebase Auth](https://firebase.google.com/products/auth) - Google's authentication service
+- **Validation**: [Zod](https://zod.dev/) - TypeScript-first schema validation
+- **Language**: [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+
+## 📋 API Overview
+
+### Base URL
+- **Development**: `http://localhost:8001`
+- **Production**: `https://your-domain.com`
+
+### Authentication
+Gunakan Bearer token untuk protected endpoints:
+```http
+Authorization: Bearer <idToken>
+```
+
+### Available Endpoints
+- `GET /health` - Health check
+- `GET /` - Service info
+- `POST /v1/auth/register` - User registration
+- `POST /v1/auth/login` - User login
+- `POST /v1/auth/refresh-token` - Refresh access token
+- `POST /v1/auth/reset-password` - Send password reset email
+- `GET /v1/auth/profile` - Get user profile (requires auth)
+- `PATCH /v1/auth/profile` - Update user profile (requires auth)
+- `DELETE /v1/auth/account` - Delete user account (requires auth)
+
+## � Customization
+
+### 1. Environment Variables
+Copy `.env.example` ke `.env` dan sesuaikan:
+```bash
+# Firebase Configuration
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=your-service-account-email
+FIREBASE_PRIVATE_KEY="your-private-key"
+
+# Server Configuration  
+PORT=8001
+NODE_ENV=development
+```
+
+### 2. CORS Configuration
+Update CORS settings di `src/index.ts`:
+```typescript
+app.use('*', cors({
+  origin: [
+    'http://localhost:3000',           // Development
+    'https://yourdomain.com',          // Production  
+    'https://app.yourdomain.com'       // App domain
+  ],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  credentials: true,
+}));
+```
+
+### 3. Custom Endpoints
+Tambahkan routes baru di `src/routes/` dan import di `src/index.ts`
+
+## 🧪 Testing
+
+```bash
+# Run tests
+bun test
+
+# Run tests with coverage
+bun test --coverage
+```
+
+## � Production Deployment
+
+### 1. Build
 ```bash
 bun run build
+```
+
+### 2. Start Production Server
+```bash
 bun run start
 ```
 
-## API Endpoints
+### 3. Environment
+Pastikan environment variables production sudah di-set dengan benar.
 
-Base URL: `http://localhost:3001`
+## �🚨 Troubleshooting
 
-### Health Check
-- `GET /health` - Service health status
+### Common Issues
 
-### Authentication Endpoints
-
-All endpoints use the base path `/v1/auth`:
-
-#### 1. Register User
-- **POST** `/v1/auth/register`
-- **Body**: `{ email, password, displayName?, photoURL? }`
-- **Response**: User data with tokens
-
-#### 2. Login User
-- **POST** `/v1/auth/login`
-- **Body**: `{ email, password }`
-- **Response**: User data with tokens
-
-#### 3. Refresh Token
-- **POST** `/v1/auth/refresh`
-- **Body**: `{ refreshToken }`
-- **Response**: New ID token
-
-#### 4. Logout User (Protected)
-- **POST** `/v1/auth/logout`
-- **Headers**: `Authorization: Bearer <id_token>`
-- **Body**: `{ refreshToken }`
-- **Response**: Success confirmation
-
-#### 5. Update Profile (Protected)
-- **PATCH** `/v1/auth/profile`
-- **Headers**: `Authorization: Bearer <id_token>`
-- **Body**: `{ displayName?, photoURL? }`
-- **Response**: Updated user data
-
-#### 6. Delete Account (Protected)
-- **DELETE** `/v1/auth/user`
-- **Headers**: `Authorization: Bearer <id_token>`
-- **Body**: `{ password }`
-- **Response**: Deletion confirmation
-
-## Response Format
-
-All responses follow a standardized format:
-
-### Success Response
-```json
-{
-  "success": true,
-  "data": { ... },
-  "message": "Operation successful",
-  "timestamp": "2025-10-03T10:30:00Z"
-}
-```
-
-### Error Response
-```json
-{
-  "success": false,
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human readable error message",
-    "details": { ... }
-  },
-  "message": "Operation failed",
-  "timestamp": "2025-10-03T10:30:00Z"
-}
-```
-
-## Error Codes
-
-- `AUTH_001` - Invalid credentials
-- `AUTH_002` - Email already exists
-- `AUTH_003` - Invalid token
-- `AUTH_004` - Token expired
-- `AUTH_005` - User not found
-- `AUTH_006` - Weak password
-- `AUTH_007` - Invalid email format
-
-## Development
-
-### Project Structure
-
-```
-src/
-├── config/
-│   └── firebase-config.ts    # Firebase configuration
-├── middleware/
-│   └── auth.ts              # Authentication middleware
-├── routes/
-│   └── auth.ts              # Auth route handlers
-├── schemas/
-│   └── auth.ts              # Zod validation schemas
-├── types/
-│   └── auth.ts              # TypeScript type definitions
-├── utils/
-│   ├── errors.ts            # Error handling utilities
-│   └── response.ts          # Response formatting utilities
-└── index.ts                 # Main server file
-```
-
-### Testing
-
-Run tests:
+#### 1. "Firebase Admin SDK not initialized"
 ```bash
-bun test
+# Check environment variables
+echo $FIREBASE_PROJECT_ID
+echo $FIREBASE_CLIENT_EMAIL
+
+# Verify .env file exists and has correct values
+cat .env
 ```
 
-### Building
-
-Build for production:
+#### 2. "Invalid private key"
 ```bash
-bun run build
+# Private key format should be:
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...\n-----END PRIVATE KEY-----\n"
 ```
 
-## Deployment
+#### 3. CORS Issues
+Update origin array di `src/index.ts` dengan domain yang diizinkan.
 
-The service is designed to be deployed as a microservice. Make sure to:
+## 🤝 Contributing
 
-1. Set all required environment variables
-2. Configure CORS origins for your domain
-3. Set up proper logging and monitoring
-4. Use HTTPS in production
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+## 📄 License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍� Author
+
+**Rayin Ailham**
+- GitHub: [@rayinailham](https://github.com/rayinailham)
+
+## 🙏 Acknowledgments
+
+- [Hono](https://hono.dev/) - Amazing web framework
+- [Firebase](https://firebase.google.com/) - Reliable authentication service
+- [Bun](https://bun.sh/) - Fast JavaScript runtime
+
+---
+
+**Developed with ❤️ by Rayina Ilham**

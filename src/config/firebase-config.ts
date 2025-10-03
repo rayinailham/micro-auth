@@ -56,6 +56,8 @@ export const FIREBASE_AUTH_ENDPOINTS = {
   signIn: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_AUTH_CONFIG.apiKey}`,
   refreshToken: `https://securetoken.googleapis.com/v1/token?key=${FIREBASE_AUTH_CONFIG.apiKey}`,
   deleteAccount: `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${FIREBASE_AUTH_CONFIG.apiKey}`,
+  sendPasswordResetEmail: `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_AUTH_CONFIG.apiKey}`,
+  resetPassword: `https://identitytoolkit.googleapis.com/v1/accounts:resetPassword?key=${FIREBASE_AUTH_CONFIG.apiKey}`,
 };
 
 // Validate Firebase configuration on startup

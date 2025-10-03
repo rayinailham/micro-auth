@@ -1,7 +1,7 @@
 {
-  "name": "auth-service",
+  "name": "micro-auth",
   "version": "1.0.0",
-  "description": "TryFitOut Auth Service using Hono and Firebase Auth",
+  "description": "Microservice Authentication Boilerplate using Hono and Firebase Auth",
   "main": "dist/index.js",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
@@ -19,7 +19,7 @@
     "@types/node": "^20.8.0",
     "bun-types": "latest"
   },
-  "keywords": ["auth", "firebase", "hono", "typescript"],
-  "author": "TryFitOut Team",
+  "keywords": ["auth", "firebase", "hono", "typescript", "microservice", "boilerplate"],
+  "author": "Rayin Ailham",
   "license": "MIT"
 }

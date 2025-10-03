@@ -8,7 +8,9 @@ import {
   refreshTokenSchema,
   updateProfileSchema,
   deleteUserSchema,
-  logoutSchema
+  logoutSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema
 } from '../schemas/auth';
 import {
   sendSuccess,
@@ -20,7 +22,7 @@ import {
   sendInternalError
 } from '../utils/response';
 import { handleFirebaseError, handleValidationError, handleGenericError } from '../utils/errors';
-import { RegisterRequest, LoginRequest, AuthResponse } from '../types/auth';
+import { RegisterRequest, LoginRequest, AuthResponse, ForgotPasswordRequest, ResetPasswordRequest } from '../types/auth';
 
 const auth = new Hono();
 
@@ -249,6 +251,66 @@ auth.delete('/user', authMiddleware, zValidator('json', deleteUserSchema), async
     return sendSuccess(c, null, 'User deleted successfully');
   } catch (error: any) {
     console.error('Delete user error:', error);
+    return handleGenericError(c, error);
+  }
+});
+
+// POST /v1/auth/forgot-password
+auth.post('/forgot-password', zValidator('json', forgotPasswordSchema), async (c) => {
+  try {
+    const { email } = c.req.valid('json') as ForgotPasswordRequest;
+
+    // Send password reset email using Firebase Auth REST API
+    const resetResponse = await fetch(FIREBASE_AUTH_ENDPOINTS.sendPasswordResetEmail, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requestType: 'PASSWORD_RESET',
+        email,
+      }),
+    });
+
+    const resetData = await resetResponse.json();
+
+    if (!resetResponse.ok) {
+      return handleFirebaseError(c, resetData.error);
+    }
+
+    return sendSuccess(c, null, 'Password reset email sent successfully');
+  } catch (error: any) {
+    console.error('Forgot password error:', error);
+    return handleGenericError(c, error);
+  }
+});
+
+// POST /v1/auth/reset-password
+auth.post('/reset-password', zValidator('json', resetPasswordSchema), async (c) => {
+  try {
+    const { oobCode, newPassword } = c.req.valid('json') as ResetPasswordRequest;
+
+    // Reset password using Firebase Auth REST API
+    const resetResponse = await fetch(FIREBASE_AUTH_ENDPOINTS.resetPassword, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        oobCode,
+        newPassword,
+      }),
+    });
+
+    const resetData = await resetResponse.json();
+
+    if (!resetResponse.ok) {
+      return handleFirebaseError(c, resetData.error);
+    }
+
+    return sendSuccess(c, null, 'Password reset successfully');
+  } catch (error: any) {
+    console.error('Reset password error:', error);
     return handleGenericError(c, error);
   }
 });

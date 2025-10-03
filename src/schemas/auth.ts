@@ -71,3 +71,20 @@ export const logoutSchema = z.object({
     .string()
     .min(1, 'Refresh token is required')
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .regex(emailRegex, 'Invalid email format')
+});
+
+export const resetPasswordSchema = z.object({
+  oobCode: z
+    .string()
+    .min(1, 'Reset code is required'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(passwordRegex, 'Password must contain at least one letter and one number')
+});

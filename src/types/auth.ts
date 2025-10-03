@@ -32,6 +32,15 @@ export interface DeleteUserRequest {
   password: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  oobCode: string;
+  newPassword: string;
+}
+
 export interface AuthResponse {
   uid: string;
   email: string;
