@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.2.2",
+    "@types/bcrypt": "^6.0.0",
     "@types/pg": "^8.15.5",
+    "bcrypt": "^6.0.0",
     "firebase-admin": "^12.4.0",
     "hono": "^4.5.8",
     "ioredis": "^5.8.0",

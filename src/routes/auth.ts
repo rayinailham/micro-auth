@@ -24,8 +24,11 @@ import {
 import { handleFirebaseError, handleValidationError, handleGenericError } from '../utils/errors';
 import { RegisterRequest, LoginRequest, AuthResponse, ForgotPasswordRequest, ResetPasswordRequest } from '../types/auth';
 import { userFederationService } from '../services/user-federation-service';
+import { UserRepository } from '../repositories/user-repository';
+import * as bcrypt from 'bcrypt';
 
 const auth = new Hono();
+const userRepository = new UserRepository();
 
 // POST /v1/auth/register
 auth.post('/register', zValidator('json', registerSchema), async (c) => {
@@ -90,12 +93,14 @@ auth.post('/register', zValidator('json', registerSchema), async (c) => {
   }
 });
 
-// POST /v1/auth/login
+// POST /v1/auth/login - Hybrid Authentication
 auth.post('/login', zValidator('json', loginSchema), async (c) => {
   try {
     const { email, password } = c.req.valid('json') as LoginRequest;
 
-    // Sign in with Firebase Auth REST API
+    console.log(`🔐 Login attempt for: ${email}`);
+
+    // STEP 1: Try Firebase Authentication first
     const signInResponse = await fetch(FIREBASE_AUTH_ENDPOINTS.signIn, {
       method: 'POST',
       headers: {
@@ -110,25 +115,158 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
 
     const signInData = await signInResponse.json();
 
-    if (!signInResponse.ok) {
+    // If Firebase authentication successful, return tokens
+    if (signInResponse.ok) {
+      console.log(`✅ Firebase authentication successful for: ${email}`);
+
+      const firebaseAuth = getFirebaseAuth();
+      const userRecord = await firebaseAuth.getUser(signInData.localId);
+
+      const response: AuthResponse = {
+        uid: signInData.localId,
+        email: signInData.email,
+        displayName: userRecord.displayName,
+        photoURL: userRecord.photoURL,
+        idToken: signInData.idToken,
+        refreshToken: signInData.refreshToken,
+        expiresIn: signInData.expiresIn,
+      };
+
+      return sendSuccess(c, response, 'Login successful');
+    }
+
+    // STEP 2: Check if error is USER_NOT_FOUND (potential local user)
+    const errorCode = signInData.error?.message;
+
+    // Check if this could be a local user (user not found in Firebase)
+    // Firebase can return EMAIL_NOT_FOUND, INVALID_EMAIL, or INVALID_LOGIN_CREDENTIALS
+    const isUserNotFoundError =
+      errorCode === 'EMAIL_NOT_FOUND' ||
+      errorCode === 'INVALID_EMAIL' ||
+      errorCode === 'INVALID_LOGIN_CREDENTIALS';
+
+    if (!isUserNotFoundError) {
+      // Other Firebase errors (wrong password for existing Firebase user, disabled account, etc.)
+      console.log(`❌ Firebase error: ${errorCode}`);
       return handleFirebaseError(c, signInData.error);
     }
 
-    // Get user details from Firebase Admin
-    const firebaseAuth = getFirebaseAuth();
-    const userRecord = await firebaseAuth.getUser(signInData.localId);
+    console.log(`🔍 User not found in Firebase (${errorCode}), checking PostgreSQL...`);
 
-    const response: AuthResponse = {
-      uid: signInData.localId,
-      email: signInData.email,
-      displayName: userRecord.displayName,
-      photoURL: userRecord.photoURL,
-      idToken: signInData.idToken,
-      refreshToken: signInData.refreshToken,
-      expiresIn: signInData.expiresIn,
-    };
+    // STEP 3: Check PostgreSQL for local user
+    const localUser = await userRepository.findByEmail(email);
 
-    return sendSuccess(c, response, 'Login successful');
+    if (!localUser) {
+      console.log(`❌ User not found in PostgreSQL: ${email}`);
+      return sendUnauthorized(c, 'Invalid email or password');
+    }
+
+    console.log(`✅ Local user found: ${localUser.id} (${localUser.email})`);
+
+    // STEP 4: Verify user has password_hash
+    if (!localUser.password_hash) {
+      console.log(`❌ User has no password_hash: ${email}`);
+      return sendBadRequest(c, 'Password reset required. Please use forgot password.');
+    }
+
+    // STEP 5: Verify password with bcrypt
+    console.log(`🔐 Verifying password with bcrypt...`);
+    const isPasswordValid = await bcrypt.compare(password, localUser.password_hash);
+
+    if (!isPasswordValid) {
+      console.log(`❌ Invalid password for: ${email}`);
+      return sendUnauthorized(c, 'Invalid email or password');
+    }
+
+    console.log(`✅ Password verified for: ${email}`);
+
+    // STEP 6: Migrate user to Firebase
+    console.log(`🚀 Starting migration to Firebase for: ${email}`);
+
+    try {
+      const firebaseAuth = getFirebaseAuth();
+
+      // Check if user already exists in Firebase (race condition protection)
+      let firebaseUser;
+      try {
+        firebaseUser = await firebaseAuth.getUserByEmail(email);
+        console.log(`⚠️ User already exists in Firebase: ${firebaseUser.uid}`);
+      } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+          // Create Firebase user
+          console.log(`📝 Creating Firebase user...`);
+          firebaseUser = await firebaseAuth.createUser({
+            email: email,
+            password: password,
+            displayName: localUser.username || undefined,
+            disabled: !localUser.is_active,
+          });
+          console.log(`✅ Firebase user created: ${firebaseUser.uid}`);
+        } else {
+          throw error;
+        }
+      }
+
+      // Update PostgreSQL with firebase_uid
+      console.log(`📝 Updating PostgreSQL with firebase_uid...`);
+      await userRepository.updateUser(localUser.id, {
+        firebase_uid: firebaseUser.uid,
+        auth_provider: 'hybrid',
+        federation_status: 'active',
+        last_firebase_sync: new Date(),
+      });
+      console.log(`✅ PostgreSQL updated successfully`);
+
+      // Generate Firebase tokens by signing in
+      console.log(`🔑 Generating Firebase tokens...`);
+      const tokenResponse = await fetch(FIREBASE_AUTH_ENDPOINTS.signIn, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          returnSecureToken: true,
+        }),
+      });
+
+      const tokenData = await tokenResponse.json();
+
+      if (!tokenResponse.ok) {
+        throw new Error(`Failed to generate tokens: ${tokenData.error?.message}`);
+      }
+
+      console.log(`✅ Migration completed successfully for: ${email}`);
+
+      const response: AuthResponse = {
+        uid: firebaseUser.uid,
+        email: email,
+        displayName: firebaseUser.displayName,
+        photoURL: firebaseUser.photoURL,
+        idToken: tokenData.idToken,
+        refreshToken: tokenData.refreshToken,
+        expiresIn: tokenData.expiresIn,
+      };
+
+      return sendSuccess(c, response, 'Login successful - Account migrated to Firebase');
+
+    } catch (migrationError: any) {
+      console.error(`❌ Migration failed for ${email}:`, migrationError);
+
+      // Mark migration as failed in database
+      try {
+        await userRepository.updateUser(localUser.id, {
+          federation_status: 'failed',
+          last_firebase_sync: new Date(),
+        });
+      } catch (updateError) {
+        console.error('Failed to update federation_status:', updateError);
+      }
+
+      return sendInternalError(c, 'Migration to Firebase failed. Please try again or contact support.');
+    }
+
   } catch (error: any) {
     console.error('Login error:', error);
     return handleGenericError(c, error);
