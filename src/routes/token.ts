@@ -22,7 +22,7 @@ token.post('/verify', zValidator('json', verifyTokenSchema), async (c) => {
     const cached = await getCachedTokenVerification(idToken);
     if (cached) {
       console.log('✅ Token verification from cache');
-      return sendSuccess(c, cached, 'Token verified from cache');
+      return sendSuccess(c, cached, 'Token verified from cache using auth v2');
     }
 
     // Verify token with Firebase
@@ -81,7 +81,7 @@ token.post('/verify', zValidator('json', verifyTokenSchema), async (c) => {
 
     console.log(`✅ Token verified for user: ${user.email} (${user.id})`);
 
-    return sendSuccess(c, responseData, 'Token verified successfully');
+    return sendSuccess(c, responseData, 'Token verified successfully using auth v2');
   } catch (error: any) {
     console.error('Token verification error:', error);
     return handleGenericError(c, error);
@@ -107,7 +107,7 @@ token.post('/verify-header', async (c) => {
     const cached = await getCachedTokenVerification(idToken);
     if (cached) {
       console.log('✅ Token verification from cache (header)');
-      return sendSuccess(c, cached, 'Token verified from cache');
+      return sendSuccess(c, cached, 'Token verified from cache using auth v2');
     }
 
     // Verify token with Firebase
@@ -166,7 +166,7 @@ token.post('/verify-header', async (c) => {
 
     console.log(`✅ Token verified for user: ${user.email} (${user.id})`);
 
-    return sendSuccess(c, responseData, 'Token verified successfully');
+    return sendSuccess(c, responseData, 'Token verified successfully using auth v2');
   } catch (error: any) {
     console.error('Token verification error:', error);
     return handleGenericError(c, error);
@@ -182,7 +182,7 @@ token.get('/health', (c) => {
     status: 'healthy',
     service: 'token-verification',
     timestamp: new Date().toISOString(),
-  }, 'Token verification service is healthy');
+  }, 'Token verification service is healthy using auth v2');
 });
 
 export default token;

@@ -86,7 +86,7 @@ auth.post('/register', zValidator('json', registerSchema), async (c) => {
       createdAt: new Date().toISOString(),
     };
 
-    return sendCreated(c, response, 'User registered successfully');
+    return sendCreated(c, response, 'User registered successfully using auth v2');
   } catch (error: any) {
     console.error('Register error:', error);
     return handleGenericError(c, error);
@@ -132,7 +132,7 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
         expiresIn: signInData.expiresIn,
       };
 
-      return sendSuccess(c, response, 'Login successful');
+      return sendSuccess(c, response, 'Login successful using auth v2');
     }
 
     // STEP 2: Check if error is USER_NOT_FOUND (potential local user)
@@ -249,7 +249,7 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
         expiresIn: tokenData.expiresIn,
       };
 
-      return sendSuccess(c, response, 'Login successful - Account migrated to Firebase');
+      return sendSuccess(c, response, 'Login successful - Account migrated to Firebase using auth v2');
 
     } catch (migrationError: any) {
       console.error(`❌ Migration failed for ${email}:`, migrationError);
@@ -302,7 +302,7 @@ auth.post('/refresh', zValidator('json', refreshTokenSchema), async (c) => {
       expiresIn: refreshData.expires_in,
     };
 
-    return sendSuccess(c, response, 'Token refreshed successfully');
+    return sendSuccess(c, response, 'Token refreshed successfully using auth v2');
   } catch (error: any) {
     console.error('Refresh token error:', error);
     return handleGenericError(c, error);
@@ -319,7 +319,7 @@ auth.post('/logout', authMiddleware, zValidator('json', logoutSchema), async (c)
     const firebaseAuth = getFirebaseAuth();
     await firebaseAuth.revokeRefreshTokens(user.uid);
 
-    return sendSuccess(c, null, 'Logout successful');
+    return sendSuccess(c, null, 'Logout successful using auth v2');
   } catch (error: any) {
     console.error('Logout error:', error);
     return handleGenericError(c, error);
@@ -356,7 +356,7 @@ auth.patch('/profile', authMiddleware, zValidator('json', updateProfileSchema), 
       updatedAt: new Date().toISOString(),
     };
 
-    return sendSuccess(c, response, 'Profile updated successfully');
+    return sendSuccess(c, response, 'Profile updated successfully using auth v2');
   } catch (error: any) {
     console.error('Update profile error:', error);
     return handleGenericError(c, error);
@@ -397,7 +397,7 @@ auth.delete('/user', authMiddleware, zValidator('json', deleteUserSchema), async
     // Delete the user account
     await firebaseAuth.deleteUser(user.uid);
 
-    return sendSuccess(c, null, 'User deleted successfully');
+    return sendSuccess(c, null, 'User deleted successfully using auth v2');
   } catch (error: any) {
     console.error('Delete user error:', error);
     return handleGenericError(c, error);
@@ -427,7 +427,7 @@ auth.post('/forgot-password', zValidator('json', forgotPasswordSchema), async (c
       return handleFirebaseError(c, resetData.error);
     }
 
-    return sendSuccess(c, null, 'Password reset email sent successfully');
+    return sendSuccess(c, null, 'Password reset email sent successfully using auth v2');
   } catch (error: any) {
     console.error('Forgot password error:', error);
     return handleGenericError(c, error);
@@ -457,7 +457,7 @@ auth.post('/reset-password', zValidator('json', resetPasswordSchema), async (c) 
       return handleFirebaseError(c, resetData.error);
     }
 
-    return sendSuccess(c, null, 'Password reset successfully');
+    return sendSuccess(c, null, 'Password reset successfully using auth v2');
   } catch (error: any) {
     console.error('Reset password error:', error);
     return handleGenericError(c, error);
