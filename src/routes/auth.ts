@@ -23,6 +23,7 @@ import {
 } from '../utils/response';
 import { handleFirebaseError, handleValidationError, handleGenericError } from '../utils/errors';
 import { RegisterRequest, LoginRequest, AuthResponse, ForgotPasswordRequest, ResetPasswordRequest } from '../types/auth';
+import { userFederationService } from '../services/user-federation-service';
 
 const auth = new Hono();
 
@@ -52,13 +53,23 @@ auth.post('/register', zValidator('json', registerSchema), async (c) => {
 
     // Update user profile if displayName or photoURL provided
     const firebaseAuth = getFirebaseAuth();
-    const userRecord = await firebaseAuth.getUser(signUpData.localId);
-    
+    let userRecord = await firebaseAuth.getUser(signUpData.localId);
+
     if (displayName || photoURL) {
       await firebaseAuth.updateUser(signUpData.localId, {
         displayName,
         photoURL,
       });
+      userRecord = await firebaseAuth.getUser(signUpData.localId);
+    }
+
+    // Create user in PostgreSQL (lazy creation)
+    try {
+      const pgUser = await userFederationService.getOrCreateUser(userRecord);
+      console.log(`✅ User created in PostgreSQL: ${pgUser.email} (${pgUser.id})`);
+    } catch (error) {
+      console.error('Failed to create user in PostgreSQL:', error);
+      // Don't fail registration if PostgreSQL sync fails
     }
 
     const response: AuthResponse = {

@@ -88,3 +88,9 @@ export const resetPasswordSchema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .regex(passwordRegex, 'Password must contain at least one letter and one number')
 });
+
+export const verifyTokenSchema = z.object({
+  token: z
+    .string()
+    .min(1, 'Token is required')
+});
