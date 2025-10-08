@@ -101,6 +101,9 @@ export class UserRepository {
    * Create a new user
    */
   async createUser(input: CreateUserInput): Promise<User> {
+    // Get default token balance from environment variable with fallback to 3
+    const defaultTokenBalance = parseInt(process.env.DEFAULT_TOKEN_BALANCE || '3', 10);
+    
     const {
       email,
       username = null,
@@ -109,7 +112,7 @@ export class UserRepository {
       firebase_uid = null,
       auth_provider = 'local',
       provider_data = null,
-      token_balance = 0,
+      token_balance = defaultTokenBalance,
     } = input;
 
     const result = await query<User>(
@@ -280,6 +283,17 @@ export class UserRepository {
     const result = await query<User>(
       'SELECT * FROM auth.users WHERE federation_status = $1',
       ['failed']
+    );
+    return result.rows;
+  }
+
+  /**
+   * Find all users (with optional limit for safety)
+   */
+  async findAll(limit: number = 1000): Promise<User[]> {
+    const result = await query<User>(
+      'SELECT * FROM auth.users ORDER BY created_at DESC LIMIT $1',
+      [limit]
     );
     return result.rows;
   }

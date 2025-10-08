@@ -24,16 +24,59 @@ import {
 import { handleFirebaseError, handleValidationError, handleGenericError } from '../utils/errors';
 import { RegisterRequest, LoginRequest, AuthResponse, ForgotPasswordRequest, ResetPasswordRequest } from '../types/auth';
 import { userFederationService } from '../services/user-federation-service';
+import { forgotPasswordService } from '../services/forgot-password-service';
+import { registrationValidationService } from '../services/registration-validation-service';
 import { UserRepository } from '../repositories/user-repository';
 import * as bcrypt from 'bcrypt';
 
 const auth = new Hono();
 const userRepository = new UserRepository();
 
-// POST /v1/auth/register
+// POST /v1/auth/register - With Pre-registration Validation
 auth.post('/register', zValidator('json', registerSchema), async (c) => {
   try {
     const { email, password, displayName, photoURL } = c.req.valid('json') as RegisterRequest;
+
+    console.log(`📝 Registration attempt for: ${email}`);
+
+    // PHASE 2: Pre-registration validation to prevent conflicts
+    const validationResult = await registrationValidationService.validateRegistration(email);
+
+    if (!validationResult.allowed) {
+      console.log(`❌ Registration blocked for ${email}: ${validationResult.conflictType}`);
+
+      // Log orphaned accounts for manual resolution
+      if (validationResult.conflictType === 'orphaned_account') {
+        console.error(`🚨 ORPHANED ACCOUNT ALERT: ${email}`);
+        console.error(`   Error Code: ${validationResult.errorCode}`);
+        console.error(`   PostgreSQL User:`, validationResult.pgUser);
+        console.error(`   Firebase User:`, validationResult.firebaseUser);
+      }
+
+      if (validationResult.conflictType === 'inconsistent_state') {
+        console.error(`🚨 INCONSISTENT STATE ALERT: ${email}`);
+        console.error(`   Error Code: ${validationResult.errorCode}`);
+        console.error(`   PostgreSQL User:`, validationResult.pgUser);
+      }
+
+      // Return appropriate error response based on conflict type
+      if (validationResult.conflictType === 'local_user') {
+        return sendConflict(c, validationResult.actionableMessage || validationResult.errorMessage || 'Email already exists');
+      }
+
+      if (validationResult.conflictType === 'hybrid_user' || validationResult.conflictType === 'firebase_user') {
+        return sendConflict(c, validationResult.actionableMessage || validationResult.errorMessage || 'Email already exists');
+      }
+
+      if (validationResult.conflictType === 'orphaned_account' || validationResult.conflictType === 'inconsistent_state') {
+        return sendInternalError(c, validationResult.actionableMessage || validationResult.errorMessage || 'Account inconsistency detected');
+      }
+
+      // Fallback error
+      return sendConflict(c, validationResult.actionableMessage || validationResult.errorMessage || 'Registration not allowed');
+    }
+
+    console.log(`✅ Pre-registration validation passed for: ${email}`);
 
     // Create user with Firebase Auth REST API
     const signUpResponse = await fetch(FIREBASE_AUTH_ENDPOINTS.signUp, {
@@ -86,6 +129,7 @@ auth.post('/register', zValidator('json', registerSchema), async (c) => {
       createdAt: new Date().toISOString(),
     };
 
+    console.log(`✅ User registered successfully: ${email}`);
     return sendCreated(c, response, 'User registered successfully using auth v2');
   } catch (error: any) {
     console.error('Register error:', error);
@@ -404,30 +448,28 @@ auth.delete('/user', authMiddleware, zValidator('json', deleteUserSchema), async
   }
 });
 
-// POST /v1/auth/forgot-password
+// POST /v1/auth/forgot-password - Hybrid with Auto-Migration
 auth.post('/forgot-password', zValidator('json', forgotPasswordSchema), async (c) => {
   try {
     const { email } = c.req.valid('json') as ForgotPasswordRequest;
 
-    // Send password reset email using Firebase Auth REST API
-    const resetResponse = await fetch(FIREBASE_AUTH_ENDPOINTS.sendPasswordResetEmail, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        requestType: 'PASSWORD_RESET',
-        email,
-      }),
-    });
+    console.log(`📧 Forgot password request for: ${email}`);
 
-    const resetData = await resetResponse.json();
+    // Use hybrid forgot password service
+    const result = await forgotPasswordService.processForgotPassword(email);
 
-    if (!resetResponse.ok) {
-      return handleFirebaseError(c, resetData.error);
+    if (!result.success) {
+      console.error(`❌ Forgot password failed for ${email}:`, result.error);
+      return sendInternalError(c, result.message);
     }
 
-    return sendSuccess(c, null, 'Password reset email sent successfully using auth v2');
+    // Log migration event if it occurred
+    if (result.migrated) {
+      console.log(`✅ User migrated during forgot password: ${email}`);
+    }
+
+    // Always return success message (security best practice)
+    return sendSuccess(c, null, result.message);
   } catch (error: any) {
     console.error('Forgot password error:', error);
     return handleGenericError(c, error);

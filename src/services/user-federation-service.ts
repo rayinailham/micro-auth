@@ -70,7 +70,7 @@ export class UserFederationService {
           creation_time: firebaseUser.metadata.creationTime,
           last_sign_in_time: firebaseUser.metadata.lastSignInTime,
         },
-        token_balance: 3, // Default token balance for new users
+        token_balance: parseInt(process.env.DEFAULT_TOKEN_BALANCE || '3', 10), // Default token balance from env
       };
 
       const user = await userRepository.createUser(input);
