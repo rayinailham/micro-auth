@@ -21,7 +21,7 @@ export function getRedisConfig(): RedisConfig {
     port: parseInt(process.env.REDIS_PORT || '6379'),
     password: process.env.REDIS_PASSWORD || '',
     db: parseInt(process.env.REDIS_DB || '1'),
-    keyPrefix: process.env.REDIS_KEY_PREFIX || 'atma:auth-v2:',
+    keyPrefix: process.env.REDIS_KEY_PREFIX || 'fg:auth-v2:',
   };
 }
 

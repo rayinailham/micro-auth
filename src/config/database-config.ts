@@ -26,8 +26,8 @@ export function getDatabaseConfig(): DatabaseConfig {
   return {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'atma_db',
-    user: process.env.DB_USER || 'atma_user',
+    database: process.env.DB_NAME || 'fg_db',
+    user: process.env.DB_USER || 'fg_user',
     password: process.env.DB_PASSWORD || '',
     schema: process.env.DB_SCHEMA || 'auth',
     pool: {

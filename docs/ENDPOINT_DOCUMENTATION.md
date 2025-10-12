@@ -782,7 +782,7 @@ FIREBASE_API_KEY=your-api-key
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=atma_db
+DB_NAME=fg_db
 DB_USER=postgres
 DB_PASSWORD=postgres
 

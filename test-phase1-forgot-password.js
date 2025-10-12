@@ -76,9 +76,9 @@ async function checkUserInDatabase(email) {
   const pool = new Pool({
     host: 'localhost',
     port: 5432,
-    database: 'atma_db',
-    user: 'atma_user',
-    password: 'atma_password',
+    database: 'fg_db',
+    user: 'fg_user',
+    password: 'fg_password',
   });
 
   try {

@@ -53,7 +53,7 @@
 ## Container Status
 
 ```
-NAME: atma-auth-v2-service
+NAME: fg-auth-v2-service
 STATUS: Up and running (healthy)
 PORT: 0.0.0.0:3008->3008/tcp
 UPTIME: ~3 minutes (since restart)
