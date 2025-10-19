@@ -6,6 +6,9 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Password validation - at least 8 characters, contains letters and numbers
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
+// School name validation - alphanumeric with spaces and special chars (including international characters)
+const schoolNameRegex = /^[A-Za-z0-9\s\-&.,'()éàèêëïîôùûüÿçñáíóúÉÀÈÊËÏÎÔÙÛÜŸÇÑÁÍÓÚ/]+$/;
+
 export const registerSchema = z.object({
   email: z
     .string()
@@ -23,6 +26,12 @@ export const registerSchema = z.object({
   photoURL: z
     .string()
     .url('Invalid photo URL format')
+    .optional(),
+  schoolName: z
+    .string()
+    .min(1, 'School name cannot be empty')
+    .max(200, 'School name too long')
+    .regex(schoolNameRegex, 'School name contains invalid characters')
     .optional()
 });
 

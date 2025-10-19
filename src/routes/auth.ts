@@ -35,9 +35,25 @@ const userRepository = new UserRepository();
 // POST /v1/auth/register - With Pre-registration Validation
 auth.post('/register', zValidator('json', registerSchema), async (c) => {
   try {
-    const { email, password, displayName, photoURL } = c.req.valid('json') as RegisterRequest;
+    const { email, password, displayName, photoURL, schoolName } = c.req.valid('json') as RegisterRequest;
 
     console.log(`📝 Registration attempt for: ${email}`);
+
+    // Sanitize and validate schoolName if provided
+    let sanitizedSchoolName: string | undefined = undefined;
+    if (schoolName) {
+      const trimmedSchoolName = schoolName.trim();
+
+      // If schoolName is provided but empty after trim, return error
+      if (trimmedSchoolName.length === 0) {
+        console.log(`❌ Invalid school name (empty after trim) for: ${email}`);
+        return sendBadRequest(c, 'School name cannot be empty');
+      }
+
+      // Sanitize: convert to uppercase
+      sanitizedSchoolName = trimmedSchoolName.toUpperCase();
+      console.log(`🏫 School name provided: ${sanitizedSchoolName}`);
+    }
 
     // PHASE 2: Pre-registration validation to prevent conflicts
     const validationResult = await registrationValidationService.validateRegistration(email);
@@ -111,8 +127,11 @@ auth.post('/register', zValidator('json', registerSchema), async (c) => {
 
     // Create user in PostgreSQL (lazy creation)
     try {
-      const pgUser = await userFederationService.getOrCreateUser(userRecord);
+      const pgUser = await userFederationService.getOrCreateUser(userRecord, sanitizedSchoolName);
       console.log(`✅ User created in PostgreSQL: ${pgUser.email} (${pgUser.id})`);
+      if (sanitizedSchoolName) {
+        console.log(`✅ User registered with school: ${sanitizedSchoolName}`);
+      }
     } catch (error) {
       console.error('Failed to create user in PostgreSQL:', error);
       // Don't fail registration if PostgreSQL sync fails

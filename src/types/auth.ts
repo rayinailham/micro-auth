@@ -12,6 +12,7 @@ export interface RegisterRequest {
   password: string;
   displayName?: string;
   photoURL?: string;
+  schoolName?: string;
 }
 
 export interface LoginRequest {

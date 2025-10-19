@@ -1,6 +1,8 @@
 import { UserRecord } from 'firebase-admin/auth';
 import { userRepository, User, CreateUserInput, UpdateUserInput } from '../repositories/user-repository';
 import { getFirebaseAuth } from '../config/firebase-config';
+import { schoolService } from './school-service';
+import { query } from '../config/database-config';
 
 /**
  * User Federation Service
@@ -11,7 +13,7 @@ export class UserFederationService {
    * Lazy user creation: Create user in PostgreSQL if not exists
    * This is called when a Firebase user first accesses the system
    */
-  async getOrCreateUser(firebaseUser: UserRecord): Promise<User> {
+  async getOrCreateUser(firebaseUser: UserRecord, schoolName?: string): Promise<User> {
     try {
       // Try to find existing user by Firebase UID
       let user = await userRepository.findByFirebaseUid(firebaseUser.uid);
@@ -30,7 +32,7 @@ export class UserFederationService {
       }
 
       // User doesn't exist, create new user
-      return await this.createUserFromFirebase(firebaseUser);
+      return await this.createUserFromFirebase(firebaseUser, schoolName);
     } catch (error) {
       console.error('Error in getOrCreateUser:', error);
       throw error;
@@ -40,13 +42,27 @@ export class UserFederationService {
   /**
    * Create a new user in PostgreSQL from Firebase user data
    */
-  private async createUserFromFirebase(firebaseUser: UserRecord): Promise<User> {
+  private async createUserFromFirebase(firebaseUser: UserRecord, schoolName?: string): Promise<User> {
     try {
+      // Handle school creation if schoolName provided
+      let schoolId: number | null = null;
+      if (schoolName) {
+        try {
+          const school = await schoolService.getOrCreateSchool(schoolName);
+          schoolId = school.id;
+          console.log(`✅ School associated: ${school.name} (ID: ${schoolId})`);
+        } catch (error) {
+          console.error('Error creating/getting school:', error);
+          // Don't fail user creation if school creation fails
+          console.log('⚠️  Continuing user creation without school');
+        }
+      }
+
       // Generate unique username from display name or email
       let username = firebaseUser.displayName;
       if (!username) {
         // Use email prefix if no display name
-        username = firebaseUser.email?.split('@')[0] || null;
+        username = firebaseUser.email?.split('@')[0] || undefined;
       }
 
       // If username exists, append Firebase UID suffix to make it unique
@@ -71,9 +87,24 @@ export class UserFederationService {
           last_sign_in_time: firebaseUser.metadata.lastSignInTime,
         },
         token_balance: parseInt(process.env.DEFAULT_TOKEN_BALANCE || '3', 10), // Default token balance from env
+        school_id: schoolId,
       };
 
       const user = await userRepository.createUser(input);
+
+      // Update user_profiles with school_id if school was created
+      if (schoolId) {
+        try {
+          await query(
+            'UPDATE auth.user_profiles SET school_id = $1 WHERE user_id = $2',
+            [schoolId, user.id]
+          );
+          console.log(`✅ Updated user_profiles with school_id for user: ${user.id}`);
+        } catch (error) {
+          console.error('Error updating user_profiles with school_id:', error);
+          // Don't fail if profile update fails
+        }
+      }
 
       // Update last_firebase_sync
       await userRepository.updateUser(user.id, {
@@ -81,7 +112,11 @@ export class UserFederationService {
         federation_status: 'active',
       });
 
-      console.log(`✅ Created new user from Firebase: ${user.email} (${user.id})`);
+      if (schoolName) {
+        console.log(`✅ Created new user from Firebase with school: ${user.email} (${user.id})`);
+      } else {
+        console.log(`✅ Created new user from Firebase: ${user.email} (${user.id})`);
+      }
 
       return user;
     } catch (error) {

@@ -19,6 +19,8 @@ export interface User {
   provider_data: any | null;
   last_firebase_sync: Date | null;
   federation_status: 'active' | 'syncing' | 'failed' | 'disabled';
+  // School association
+  school_id: number | null;
 }
 
 // Create user input
@@ -31,6 +33,7 @@ export interface CreateUserInput {
   auth_provider?: 'local' | 'firebase' | 'hybrid';
   provider_data?: any;
   token_balance?: number;
+  school_id?: number | null;
 }
 
 // Update user input
@@ -46,6 +49,7 @@ export interface UpdateUserInput {
   provider_data?: any;
   last_firebase_sync?: Date;
   federation_status?: 'active' | 'syncing' | 'failed' | 'disabled';
+  school_id?: number | null;
 }
 
 /**
@@ -103,7 +107,7 @@ export class UserRepository {
   async createUser(input: CreateUserInput): Promise<User> {
     // Get default token balance from environment variable with fallback to 3
     const defaultTokenBalance = parseInt(process.env.DEFAULT_TOKEN_BALANCE || '3', 10);
-    
+
     const {
       email,
       username = null,
@@ -113,14 +117,15 @@ export class UserRepository {
       auth_provider = 'local',
       provider_data = null,
       token_balance = defaultTokenBalance,
+      school_id = null,
     } = input;
 
     const result = await query<User>(
       `INSERT INTO auth.users (
-        email, username, password_hash, user_type, firebase_uid, 
+        email, username, password_hash, user_type, firebase_uid,
         auth_provider, provider_data, token_balance, is_active,
-        created_at, updated_at, federation_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), $10)
+        created_at, updated_at, federation_status, school_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), $10, $11)
       RETURNING *`,
       [
         email,
@@ -133,6 +138,7 @@ export class UserRepository {
         token_balance,
         true,
         'active',
+        school_id,
       ]
     );
 
@@ -192,6 +198,10 @@ export class UserRepository {
       fields.push(`federation_status = $${paramIndex++}`);
       values.push(input.federation_status);
     }
+    if (input.school_id !== undefined) {
+      fields.push(`school_id = $${paramIndex++}`);
+      values.push(input.school_id);
+    }
 
     // Always update updated_at
     fields.push(`updated_at = NOW()`);
@@ -219,6 +229,17 @@ export class UserRepository {
       'UPDATE auth.users SET last_login = NOW(), updated_at = NOW() WHERE id = $1',
       [id]
     );
+  }
+
+  /**
+   * Update user's school_id
+   */
+  async updateSchoolId(id: string, schoolId: number | null): Promise<User | null> {
+    const result = await query<User>(
+      'UPDATE auth.users SET school_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [schoolId, id]
+    );
+    return result.rows[0] || null;
   }
 
   /**
